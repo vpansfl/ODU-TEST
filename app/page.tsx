@@ -1,56 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import MovieCard from "./components/MovieCard";
 import MovieForm from "./components/MovieForm";
 import AuthStatus from "./components/AuthStatus";
+import MovieSearch from "./components/MovieSearch";
+import type { MovieDetail } from "../lib/movieSearch";
 import { supabase } from "../lib/supabase";
-
-// 영화 한 편의 데이터 모양
-export type Movie = {
-  id: number;
-  title: string;
-  genre: string;
-  rating: number;
-  watchedDate: string;
-  memo: string;
-};
-
-// 폼에서 입력받는 값 (id는 Supabase가 자동으로 만들어 줌)
-export type MovieInput = Omit<Movie, "id">;
-
-// Supabase movies 테이블의 한 줄 모양 (컬럼 이름은 snake_case)
-type MovieRow = {
-  id: number;
-  title: string;
-  genre: string;
-  rating: number;
-  watched_date: string;
-  memo: string;
-};
-
-// 테이블 한 줄 → 화면에서 쓰는 Movie 모양으로 바꾸기
-function rowToMovie(row: MovieRow): Movie {
-  return {
-    id: row.id,
-    title: row.title,
-    genre: row.genre,
-    rating: row.rating,
-    watchedDate: row.watched_date,
-    memo: row.memo,
-  };
-}
-
-// 폼 입력값 → 테이블에 저장할 모양으로 바꾸기
-function inputToRow(input: MovieInput) {
-  return {
-    title: input.title,
-    genre: input.genre,
-    rating: input.rating,
-    watched_date: input.watchedDate,
-    memo: input.memo,
-  };
-}
+import { MOVIE_COLUMNS, inputToRow, rowToMovie, type Movie, type MovieInput } from "../lib/movies";
 
 export default function Home() {
   // Supabase에서 불러온 영화 목록
@@ -63,6 +21,10 @@ export default function Home() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   // 수정 중인 영화 (추가할 때는 null)
   const [editingMovie, setEditingMovie] = useState<Movie | null>(null);
+  // 검색에서 "리뷰 쓰기"를 누른 영화 (폼에 미리 채울 정보)
+  const [reviewMovie, setReviewMovie] = useState<MovieDetail | null>(null);
+  // 검색 영역 초기화용 번호 (로고를 누르면 1 증가)
+  const [searchKey, setSearchKey] = useState(0);
   // 로그인한 사용자의 id (undefined: 아직 확인 중, null: 로그아웃 상태)
   const [userId, setUserId] = useState<string | null | undefined>(undefined);
 
@@ -77,7 +39,7 @@ export default function Home() {
 
     const { data, error } = await supabase
       .from("movies")
-      .select("id, title, genre, rating, watched_date, memo")
+      .select(MOVIE_COLUMNS)
       .eq("user_id", userId)
       .order("watched_date", { ascending: false });
 
@@ -149,17 +111,39 @@ export default function Home() {
 
   function openAddForm() {
     setEditingMovie(null);
+    setReviewMovie(null);
     setIsFormOpen(true);
   }
 
   function openEditForm(movie: Movie) {
     setEditingMovie(movie);
+    setReviewMovie(null);
     setIsFormOpen(true);
+    // 카드는 아래쪽에 있으므로, 폼이 그려진 다음 폼 위치로 스크롤
+    setTimeout(() => document.getElementById("movie-form")?.scrollIntoView({ block: "start" }), 0);
+  }
+
+  // 검색 상세정보의 "리뷰 쓰기" → 그 영화 정보가 채워진 폼 열기
+  function openReviewForm(movie: MovieDetail) {
+    setEditingMovie(null);
+    setReviewMovie(movie);
+    setIsFormOpen(true);
+    // 폼이 화면에 그려진 다음 폼 위치로 스크롤
+    setTimeout(() => document.getElementById("movie-form")?.scrollIntoView({ block: "start" }), 0);
   }
 
   function closeForm() {
     setIsFormOpen(false);
     setEditingMovie(null);
+    setReviewMovie(null);
+  }
+
+  // 로고 클릭 → 홈 처음 상태로 (검색 결과·열린 폼 닫고 맨 위로)
+  function goHome() {
+    closeForm();
+    setErrorMessage("");
+    setSearchKey((key) => key + 1); // key가 바뀌면 검색 영역이 새로 그려지며 초기화됨
+    window.scrollTo({ top: 0 });
   }
 
   return (
@@ -167,7 +151,11 @@ export default function Home() {
       <header className="header">
         <div>
           <p className="site-label">My Cinema Diary</p>
-          <h1 className="site-title">Movie Log</h1>
+          <h1 className="site-title">
+            <Link className="site-title-link" href="/" onClick={goHome}>
+              Movie Log
+            </Link>
+          </h1>
           <p className="site-subtitle">지금까지 본 영화 {movies.length}편</p>
         </div>
         <div className="header-actions">
@@ -178,6 +166,8 @@ export default function Home() {
         </div>
       </header>
 
+      <MovieSearch key={searchKey} onWriteReview={openReviewForm} />
+
       {errorMessage && (
         <p className="empty-message" role="alert">
           {errorMessage}
@@ -186,8 +176,9 @@ export default function Home() {
 
       {isFormOpen && (
         <MovieForm
-          key={editingMovie ? editingMovie.id : "new"}
+          key={editingMovie ? editingMovie.id : (reviewMovie?.key ?? "new")}
           movie={editingMovie}
+          reviewMovie={reviewMovie}
           onSave={saveMovie}
           onCancel={closeForm}
         />
