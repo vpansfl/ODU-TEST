@@ -1,26 +1,525 @@
-@import "tailwindcss";
-
+/* ===== 색상 변수 =====
+   어두운 극장 + 크림색 영화 티켓 */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #15110f;            /* 극장 안 어둠 */
+  --bg-glow: #3a1714;       /* 붉은 커튼 빛 */
+  --gold: #e9b65c;          /* 간판 조명 */
+  --gold-hover: #f3c877;
+  --text: #f1e9dc;
+  --text-muted: #a3978a;
+
+  --paper: #f4ead6;         /* 티켓 종이 */
+  --paper-dark: #e9dcc2;    /* 티켓 끝부분 */
+  --ink: #2a1f1a;           /* 티켓 글씨 */
+  --ink-muted: #7b6a5b;
+  --red: #b8342a;           /* 티켓 도장 색 */
+
+  --radius: 12px;
+  color-scheme: dark;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ===== 기본 설정 ===== */
+* {
+  box-sizing: border-box;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--bg);
+  background-image: radial-gradient(ellipse at 50% -10%, var(--bg-glow) 0%, var(--bg) 60%);
+  color: var(--text);
+  font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", Arial, sans-serif;
+  line-height: 1.5;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+/* 키보드로 이동할 때 보이는 테두리 */
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* ===== 전체 레이아웃 ===== */
+.container {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 64px 20px 96px;
+}
+
+/* ===== 헤더 ===== */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 48px;
+}
+
+.site-label {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+
+.site-title {
+  margin: 0;
+  font-family: var(--font-display), sans-serif;
+  font-size: 88px;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 2px;
+  color: var(--gold);
+  text-shadow: 0 0 24px rgba(233, 182, 92, 0.35); /* 네온 간판처럼 은은한 빛 */
+}
+
+.site-subtitle {
+  margin: 8px 0 0;
+  color: var(--text-muted);
+  font-size: 15px;
+}
+
+/* ===== 버튼 ===== */
+.button {
+  padding: 10px 20px;
+  border: 1px solid rgba(241, 233, 220, 0.25);
+  border-radius: 999px;
+  background-color: transparent;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.button:hover {
+  border-color: var(--text);
+  background-color: rgba(241, 233, 220, 0.08);
+}
+
+.button-primary {
+  border-color: var(--gold);
+  background-color: var(--gold);
+  color: var(--ink);
+}
+
+.button-primary:hover {
+  border-color: var(--gold-hover);
+  background-color: var(--gold-hover);
+}
+
+/* 티켓 위 작은 버튼 (밝은 종이 위에 놓임) */
+.button-small {
+  padding: 6px 14px;
+  border-color: rgba(42, 31, 26, 0.25);
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.button-small:hover {
+  border-color: var(--ink);
+  background-color: rgba(42, 31, 26, 0.06);
+}
+
+.button-danger {
+  color: var(--red);
+}
+
+.button-danger:hover {
+  border-color: var(--red);
+  background-color: rgba(184, 52, 42, 0.08);
+}
+
+/* ===== 영화 목록 ===== */
+.movie-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(440px, 1fr));
+  gap: 24px;
+}
+
+.empty-message {
+  padding: 48px;
+  border: 1px dashed rgba(241, 233, 220, 0.25);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* ===== 영화 카드 (티켓 모양) ===== */
+.ticket {
+  display: flex;
+  overflow: hidden; /* 아래의 동그란 홈이 티켓 밖으로 나가지 않게 */
+  border-radius: var(--radius);
+  background-color: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  transition: transform 0.2s;
+}
+
+.ticket:hover {
+  transform: translateY(-4px) rotate(-0.5deg);
+}
+
+.ticket-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0; /* 긴 제목이 레이아웃을 깨지 않게 */
+  padding: 24px;
+}
+
+.ticket-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.movie-genre {
+  padding: 2px 10px;
+  border: 1px solid var(--red);
+  border-radius: 4px;
+  color: var(--red);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.movie-rating {
+  color: var(--red);
+  font-size: 15px;
+  letter-spacing: 2px;
+}
+
+.movie-title {
+  margin: 0 0 8px;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.3;
+  overflow-wrap: break-word;
+  text-wrap: balance;
+}
+
+.movie-memo {
+  flex: 1; /* 메모 길이가 달라도 버튼 위치를 맞춤 */
+  margin: 0 0 20px;
+  color: var(--ink-muted);
+  font-size: 15px;
+  overflow-wrap: break-word;
+}
+
+.card-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+/* ===== 티켓 끝부분 (감상일) ===== */
+.ticket-stub {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 110px;
+  padding: 20px 12px;
+  border-left: 2px dashed rgba(42, 31, 26, 0.3); /* 절취선 */
+  background-color: var(--paper-dark);
+  text-align: center;
+}
+
+/* 절취선 위아래의 동그란 홈 */
+.ticket-stub::before,
+.ticket-stub::after {
+  content: "";
+  position: absolute;
+  left: -11px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: var(--bg);
+}
+
+.ticket-stub::before {
+  top: -10px;
+}
+
+.ticket-stub::after {
+  bottom: -10px;
+}
+
+.stub-label {
+  margin-bottom: 8px;
+  color: var(--red);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.stub-month {
+  color: var(--ink-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.stub-day {
+  font-family: var(--font-display), sans-serif;
+  font-size: 52px;
+  line-height: 1;
+}
+
+.stub-year {
+  color: var(--ink-muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.stub-number {
+  margin-top: 10px;
+  color: var(--ink-muted);
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+
+/* ===== 추가/수정 폼 ===== */
+.movie-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 48px;
+  padding: 28px;
+  border: 1px solid rgba(233, 182, 92, 0.4);
+  border-radius: var(--radius);
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+/* 한 줄 전체를 차지하는 항목 */
+.form-title,
+.form-full,
+.form-buttons {
+  grid-column: 1 / -1;
+}
+
+.form-title {
+  margin: 0;
+  font-family: var(--font-display), sans-serif;
+  font-size: 32px;
+  font-weight: 400;
+  letter-spacing: 1px;
+  color: var(--gold);
+}
+
+.form-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.form-input {
+  padding: 11px 12px;
+  border: 1px solid rgba(241, 233, 220, 0.2);
+  border-radius: 8px;
+  background-color: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+  transition: border-color 0.15s;
+}
+
+.form-input::placeholder {
+  color: #6b6159;
+}
+
+.form-input:hover {
+  border-color: rgba(241, 233, 220, 0.4);
+}
+
+.form-input:focus-visible {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(233, 182, 92, 0.25); /* outline 대신 보이는 포커스 */
+}
+
+.form-textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.form-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* ===== 헤더 오른쪽 (로그인 상태 + 영화 추가 버튼) ===== */
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.auth-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.auth-email {
+  max-width: 220px;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 링크(<a>)를 버튼 모양으로 쓸 때 */
+a.button {
+  display: inline-block;
+  text-align: center;
+  text-decoration: none;
+}
+
+/* ===== 로그인 / 회원가입 / 비밀번호 페이지 ===== */
+.auth-page {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 64px 20px 96px;
+}
+
+.auth-home-link {
+  display: inline-block;
+  margin-bottom: 16px;
+  color: var(--gold);
+  font-family: var(--font-display), sans-serif;
+  font-size: 24px;
+  letter-spacing: 1px;
+  text-decoration: none;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 28px;
+  border: 1px solid rgba(233, 182, 92, 0.4);
+  border-radius: var(--radius);
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.auth-text {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 15px;
+}
+
+.auth-error {
+  margin: 0;
+  color: #f08a7e;
+  font-size: 14px;
+}
+
+.auth-links {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.auth-links a {
+  color: var(--gold);
+  text-underline-offset: 3px;
+}
+
+.auth-links a:hover {
+  color: var(--gold-hover);
+}
+
+/* 이메일 로그인과 카카오 로그인 사이 구분선 */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  border-top: 1px solid rgba(241, 233, 220, 0.15);
+}
+
+/* 카카오 로그인 버튼 (카카오 브랜드 노란색) */
+.button-kakao {
+  border-color: #fee500;
+  background-color: #fee500;
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.button-kakao:hover {
+  border-color: #f5dc00;
+  background-color: #f5dc00;
+}
+
+/* ===== 움직임 줄이기 설정을 켠 사용자 ===== */
+@media (prefers-reduced-motion: reduce) {
+  .ticket,
+  .button,
+  .form-input {
+    transition: none;
+  }
+
+  .ticket:hover {
+    transform: none;
+  }
+}
+
+/* ===== 모바일 화면 ===== */
+@media (max-width: 600px) {
+  .container {
+    padding-top: 40px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .site-title {
+    font-size: 64px;
+  }
+
+  .header-actions {
+    justify-content: flex-start;
+  }
+
+  .movie-list {
+    grid-template-columns: 1fr;
+  }
+
+  .movie-form {
+    grid-template-columns: 1fr;
+  }
+
+  .ticket-stub {
+    width: 90px;
+  }
 }
