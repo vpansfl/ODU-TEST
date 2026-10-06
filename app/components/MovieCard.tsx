@@ -31,7 +31,7 @@ export default function MovieCard({ movie, onEdit, onDelete, isDetail = false }:
           alt={`${movie.title} 포스터`}
           width={342}
           height={513}
-          sizes={isDetail ? "200px" : "110px"}
+          sizes={isDetail ? "220px" : "130px"}
         />
       )}
 

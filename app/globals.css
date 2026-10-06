@@ -531,20 +531,23 @@ a.button {
   line-clamp: 3;
 }
 
-/* 티켓 왼쪽 포스터: 티켓 높이에 맞춰 꽉 채움 */
+/* 티켓 왼쪽 포스터: 가장자리에서 띄우고 2:3 비율 그대로 (잘리지 않게), 세로 가운데 정렬 */
 .ticket-poster {
   flex-shrink: 0;
-  align-self: stretch;
-  width: 110px;
+  align-self: center;
+  width: 130px;
   height: auto;
-  min-height: 165px; /* 포스터 비율(2:3) 유지 */
+  aspect-ratio: 2 / 3;
+  margin: 16px 0 16px 16px;
+  border-radius: 6px;
   object-fit: cover;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
   background-color: var(--paper-dark);
 }
 
 .ticket-detail .ticket-poster {
-  width: 200px;
-  min-height: 300px;
+  width: 220px;
+  margin: 20px 0 20px 20px;
 }
 
 /* 제목 아래 개봉일 */
@@ -868,12 +871,12 @@ a.button {
 
   /* 좁은 화면에서는 포스터를 작게 */
   .ticket-poster {
-    width: 80px;
-    min-height: 120px;
+    width: 96px;
+    margin: 12px 0 12px 12px;
   }
 
   .ticket-detail .ticket-poster {
-    width: 110px;
-    min-height: 165px;
+    width: 120px;
+    margin: 16px 0 16px 16px;
   }
 }
